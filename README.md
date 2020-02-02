@@ -32,9 +32,12 @@
 - a few years of data 
 - only covers IEX :(
 
-## My strategy
+## Trading stategies
 
-#### Dat trading 
+#### My strategy - Day trading 
+
+* [The complete guide to trading strategies and styles](https://www.ig.com/en/trading-strategies/the-complete-guide-to-trading-strategies-and-styles-190709)
+* [Momentum trading strategies: a beginner's guide](https://www.ig.com/en/trading-strategies/momentum-trading-strategies--a-beginners-guide-190905#RSI)
 
 ## Technical indicators
 
@@ -50,6 +53,13 @@
 10) MFI - money flow index - https://www.fmlabs.com/reference/default.htm?url=MoneyFlowIndex.htm
 11) AD -  Chaikin A/D line (AD) - (volume and close/low/high) - https://www.fmlabs.com/reference/default.htm?url=AccumDist.htm
 12) OBV - On Balance Volume - a cumulative total of the up and down volume - https://www.fmlabs.com/reference/default.htm?url=OBV.htm
+
+## Articles on stock market forecasting
+
+* [Stock market forecasting using Time Series analysis](https://towardsdatascience.com/stock-market-forecasting-using-time-series-c3d21f2dd37f)
+* [Predicting stock prices using deep learning](https://towardsdatascience.com/getting-rich-quick-with-machine-learning-and-stock-market-predictions-696802da94fe)
+* [Stock Prices Prediction using Deep LearningModels](https://arxiv.org/pdf/1909.12227.pdf)
+* [An overview of time series forecasting models](https://towardsdatascience.com/an-overview-of-time-series-forecasting-models-a2fa7a358fcb)
 
 ## Online courses
 
