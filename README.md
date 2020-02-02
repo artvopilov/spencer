@@ -8,11 +8,13 @@
 - they also cater exceptionally to developers and students
 - 30-day trial - 100 calls/second
 
-#### Alpha Vantage
+#### Alpha Vantage - My Choice
 - free
 - 5 requests per minute
 - $19.99/month for 15 requests per minute, $249.99/month for 600 requests per minute.
 - up to 20 years of historical data
+- [API](https://www.alphavantage.co/documentation/)
+- [Python library for API](https://github.com/RomelTorres/alpha_vantage/blob/develop/alpha_vantage/techindicators.py)
 
 #### Quandl
 - subscribe to the feeds you want
@@ -60,6 +62,7 @@
 * [Predicting stock prices using deep learning](https://towardsdatascience.com/getting-rich-quick-with-machine-learning-and-stock-market-predictions-696802da94fe)
 * [Stock Prices Prediction using Deep LearningModels](https://arxiv.org/pdf/1909.12227.pdf)
 * [An overview of time series forecasting models](https://towardsdatascience.com/an-overview-of-time-series-forecasting-models-a2fa7a358fcb)
+* [Huge Stock Market Dataset - Kaggle](https://www.kaggle.com/borismarjanovic/price-volume-data-for-all-us-stocks-etfs/kernels)
 
 ## Online courses
 
