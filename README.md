@@ -48,7 +48,7 @@
 3) RSI (oversold/overbougth upavg/downavg) - https://www.investopedia.com/articles/active-trading/042114/overbought-or-oversold-use-relative-strength-index-find-out.asp
 4) Stochastic oscillator (close,lowestLow,highestHigh) - https://www.fmlabs.com/reference/default.htm?url=StochasticOscillator.htm, https://commodity.com/technical-analysis/stochastics/
 5) DEMA - Double Exponential Moving Average (with less lag than a straight exponential moving average) - https://www.fmlabs.com/reference/default.htm?url=DEMA.htm
-6) MACD - moving average convergence / divergence () - https://www.fmlabs.com/reference/default.htm?url=MACD.htm
+6) MACD - moving average convergence / divergence (not used) - https://www.fmlabs.com/reference/default.htm?url=MACD.htm
 7) ADX - average directional movement index (trend strength) - https://www.fmlabs.com/reference/default.htm?url=ADX.htm
 8) CCI - Commodity Channel Index (relation between price and a moving average (MA), or more specifically, normal deviations from that average) - http://www.fmlabs.com/reference/default.htm?url=CCI.htm
 9) AROON - periods since highest high/lowest low, AroonUp/AroonDown - https://www.fmlabs.com/reference/default.htm?url=Aroon.htm
