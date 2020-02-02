@@ -1,1 +1,0 @@
-Algirithmic Trading
