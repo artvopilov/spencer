@@ -12,6 +12,13 @@ def join_dataframes(df1, df2, on, how='inner'):
     return df1.join(df2, on=on, how=how)
 
 
+def get_daily_time_series_df(ts, stock):
+    data, meta_data = ts.get_daily(symbol=stock)
+    data.rename(columns={'1. open': 'open', '2. high': 'high', '3. low': 'low', 
+                         '4. close': 'close', '5. volume': 'volume'}, inplace=True)
+    return data
+
+
 def get_technical_indicators_df(ti, stock):
     # Simple Moving Average - 9 days
     sma_9, meta_sma_9 = ti.get_sma(stock, interval='daily', time_period=9)
