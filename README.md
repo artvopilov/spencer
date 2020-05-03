@@ -1,4 +1,4 @@
-# AlgorithmicTrading
+# AlgorithmicTrading Spencer
 
 ## APIs
 
