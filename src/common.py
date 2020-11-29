@@ -19,7 +19,7 @@ def get_daily_time_series_df(ts, stock):
     return data
 
 
-def get_technical_indicators_df(ti, stock):
+def get_technical_indicators_df(ti, stock, time_sleep=61):
     # Simple Moving Average - 9 days
     sma_9, meta_sma_9 = ti.get_sma(stock, interval='daily', time_period=9)
     sma_9.rename(columns={'SMA': 'sma_9'}, inplace=True)
@@ -35,7 +35,7 @@ def get_technical_indicators_df(ti, stock):
     # Momentum - 8 day
     mom_8, meta_mom_8 = ti.get_mom(stock, interval='daily', time_period=8)
     mom_8.rename(columns={'MOM': 'mom_8'}, inplace=True)
-    time.sleep(61)
+    time.sleep(time_sleep)
     # Momentum - 15 day
     mom_15, meta_mom_15 = ti.get_mom(stock, interval='daily', time_period=15)
     mom_15.rename(columns={'MOM': 'mom_15'}, inplace=True)
@@ -53,7 +53,7 @@ def get_technical_indicators_df(ti, stock):
     # Double Exponential Moving Average - 13 days
     dema_13, meta_dema_13 = ti.get_dema(stock, interval='daily', time_period=13)
     dema_13.rename(columns={'DEMA': 'dema_13'}, inplace=True)
-    time.sleep(61)
+    time.sleep(time_sleep)
     # Double Exponential Moving Average - 26 days
     dema_26, meta_dema_26 = ti.get_dema(stock, interval='daily', time_period=26)
     dema_26.rename(columns={'DEMA': 'dema_26'}, inplace=True)
@@ -69,7 +69,7 @@ def get_technical_indicators_df(ti, stock):
     # Commodity Channel Index (CCI) - 14 days
     cci_14, meta_cci_14 = ti.get_cci(stock, interval='daily', time_period=14)
     cci_14.rename(columns={'CCI': 'cci_14'}, inplace=True)
-    time.sleep(61)
+    time.sleep(time_sleep)
     # Aroon (AROON) values (AroonUp/AroonDown) - 14 days
     aroon_14, meta_aroon_14 = ti.get_aroon(stock, interval='daily', time_period=14)
     # Money Flow Index (MFI) - 7 days
@@ -94,3 +94,21 @@ def get_technical_indicators_df(ti, stock):
     return stock_ti_df
 
 
+def chech_if_should_buy(ti, stock):
+    # Moving Average Convergence Divergence - 9 days
+    macd_9, macd_sma_9 = ti.get_macd(stock, interval='daily')
+    # RSI - 14 day
+    rsi_14, meta_rsi_14 = ti.get_rsi(stock, interval='daily', time_period=14)
+    # Accumulation/Distribution Line / Chaikin A/D (AD)
+    ad, meta_ad = ti.get_ad(stock, interval='daily')
+    
+    stock_ti_df = join_dataframes(macd_9[-2:], rsi_14[-2:], 'date')
+    stock_ti_df = join_dataframes(stock_ti_df, ad[-2:], 'date')   
+    stock_ti_df.columns = map(lambda c: '_'.join(str.lower(c).split()), stock_ti_df.columns)
+    
+    macd_is_good = stock_ti_df['macd_hist'][-1] > 0 and stock_ti_df['macd_hist'][-2] < 0
+    rsi_is_good = stock_ti_df['rsi'][-1] > 30 and stock_ti_df['rsi'][-2] < 30
+    ad_is_good = stock_ti_df['chaikin_a/d'][-1] > 0 and stock_ti_df['chaikin_a/d'][-2] < 0
+    
+    return stock_ti_df, sum([macd_is_good, rsi_is_good, ad_is_good]) > 1
+    

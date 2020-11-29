@@ -27,7 +27,7 @@ def load_training_data(ts, ti, symbols):
         time.sleep(61)  # API calls frequency restrictions
 
 
-key = '4Q11GLKMBNKWBAXQ'
+key = 'MXSJTESP5AWNK9TI'
 
 ts = TimeSeries(key, output_format='pandas')
 ti = TechIndicators(key, output_format='pandas')
@@ -44,6 +44,6 @@ if __name__ == '__main__':
     if not os.path.exists(tech_ind_dir):
         os.mkdir(tech_ind_dir)
         
-    load_training_data(ts, ti, sp_500_symbols[84:])
+    load_training_data(ts, ti, sp_500_symbols[278:])
         
         
