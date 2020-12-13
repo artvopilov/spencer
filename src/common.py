@@ -95,20 +95,26 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
 
 
 def chech_if_should_buy(ti, stock):
-    # Moving Average Convergence Divergence - 9 days
-    macd_9, macd_sma_9 = ti.get_macd(stock, interval='daily')
-    # RSI - 14 day
-    rsi_14, meta_rsi_14 = ti.get_rsi(stock, interval='daily', time_period=14)
-    # Accumulation/Distribution Line / Chaikin A/D (AD)
-    ad, meta_ad = ti.get_ad(stock, interval='daily')
-    
-    stock_ti_df = join_dataframes(macd_9[-2:], rsi_14[-2:], 'date')
-    stock_ti_df = join_dataframes(stock_ti_df, ad[-2:], 'date')   
-    stock_ti_df.columns = map(lambda c: '_'.join(str.lower(c).split()), stock_ti_df.columns)
-    
-    macd_is_good = stock_ti_df['macd_hist'][-1] > 0 and stock_ti_df['macd_hist'][-2] < 0
-    rsi_is_good = stock_ti_df['rsi'][-1] > 30 and stock_ti_df['rsi'][-2] < 30
-    ad_is_good = stock_ti_df['chaikin_a/d'][-1] > 0 and stock_ti_df['chaikin_a/d'][-2] < 0
-    
-    return stock_ti_df, sum([macd_is_good, rsi_is_good, ad_is_good]) > 1
+    try:
+        # Moving Average Convergence Divergence - 9 days
+        macd_9, macd_sma_9 = ti.get_macd(stock, interval='daily')
+        # RSI - 14 day
+        rsi_14, meta_rsi_14 = ti.get_rsi(stock, interval='daily', time_period=14)
+        # Accumulation/Distribution Line / Chaikin A/D (AD)
+        ad, meta_ad = ti.get_ad(stock, interval='daily')
+
+        stock_ti_df = join_dataframes(macd_9[-2:], rsi_14[-2:], 'date')
+        stock_ti_df = join_dataframes(stock_ti_df, ad[-2:], 'date')   
+        stock_ti_df.columns = map(lambda c: '_'.join(str.lower(c).split()), stock_ti_df.columns)
+        
+        print('Stock: {}'.format(stock))
+        print(stock_ti_df)
+        macd_is_good = stock_ti_df['macd_hist'][-1] > 0 and stock_ti_df['macd_hist'][-2] < 0
+        rsi_is_good = stock_ti_df['rsi'][-1] > 30 and stock_ti_df['rsi'][-2] < 30
+        ad_is_good = stock_ti_df['chaikin_a/d'][-1] > 0 and stock_ti_df['chaikin_a/d'][-2] < 0
+
+        return stock_ti_df, sum([macd_is_good, rsi_is_good, ad_is_good]) > 0
+    except:
+        print('Stock: {} - error'.format(stock))  
+        return None, False
     
