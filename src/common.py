@@ -1,8 +1,14 @@
 import time
 
-from matplotlib.pyplot import figure
-import matplotlib.pyplot as plt
+import catboost
+from catboost import CatBoostClassifier, Pool
 import pandas as pd
+import numpy as np
+
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+import seaborn as sns
 
 from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.techindicators import TechIndicators
@@ -35,7 +41,6 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
     # Momentum - 8 day
     mom_8, meta_mom_8 = ti.get_mom(stock, interval='daily', time_period=8)
     mom_8.rename(columns={'MOM': 'mom_8'}, inplace=True)
-    time.sleep(time_sleep)
     # Momentum - 15 day
     mom_15, meta_mom_15 = ti.get_mom(stock, interval='daily', time_period=15)
     mom_15.rename(columns={'MOM': 'mom_15'}, inplace=True)
@@ -53,7 +58,6 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
     # Double Exponential Moving Average - 13 days
     dema_13, meta_dema_13 = ti.get_dema(stock, interval='daily', time_period=13)
     dema_13.rename(columns={'DEMA': 'dema_13'}, inplace=True)
-    time.sleep(time_sleep)
     # Double Exponential Moving Average - 26 days
     dema_26, meta_dema_26 = ti.get_dema(stock, interval='daily', time_period=26)
     dema_26.rename(columns={'DEMA': 'dema_26'}, inplace=True)
@@ -69,7 +73,6 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
     # Commodity Channel Index (CCI) - 14 days
     cci_14, meta_cci_14 = ti.get_cci(stock, interval='daily', time_period=14)
     cci_14.rename(columns={'CCI': 'cci_14'}, inplace=True)
-    time.sleep(time_sleep)
     # Aroon (AROON) values (AroonUp/AroonDown) - 14 days
     aroon_14, meta_aroon_14 = ti.get_aroon(stock, interval='daily', time_period=14)
     # Money Flow Index (MFI) - 7 days
@@ -82,9 +85,19 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
     ad, meta_ad = ti.get_ad(stock, interval='daily')
     # On Balance Volume (OBV)
     obv, meta_obv = ti.get_obv(stock, interval='daily')
+    # Bollinger bands (BBANDS) values - 14 days
+    bbands_14, meta_bbands_14 = ti.get_bbands(stock, interval='daily', time_period=14)
+    bbands_14.rename(columns={'Real Upper Band': 'bbands_14_up'}, inplace=True)
+    bbands_14.rename(columns={'Real Lower Band': 'bbands_14_low'}, inplace=True)
+    bbands_14.rename(columns={'Real Middle Band': 'bbands_14_mid'}, inplace=True)
+    # Bollinger bands (BBANDS) values - 7 days
+    bbands_7, meta_bbands_7 = ti.get_bbands(stock, interval='daily', time_period=7)
+    bbands_7.rename(columns={'Real Upper Band': 'bbands_7_up'}, inplace=True)
+    bbands_7.rename(columns={'Real Lower Band': 'bbands_7_low'}, inplace=True)
+    bbands_7.rename(columns={'Real Middle Band': 'bbands_7_mid'}, inplace=True)
     
-    ti_dfs = [sma_9,sma_13, sma_26, mom_1, mom_8, mom_15, rsi_7, rsi_14, stoch_14_3_3, 
-              dema_13, dema_26, adx_7, adx_14, cci_7, cci_14, aroon_14, mfi_7, mfi_14, ad, obv]
+    ti_dfs = [sma_9, sma_13, sma_26, mom_1, mom_8, mom_15, rsi_7, rsi_14, stoch_14_3_3, dema_13, dema_26, 
+              adx_7, adx_14, cci_7, cci_14, aroon_14, mfi_7, mfi_14, ad, obv, bbands_14, bbands_7]
     
     stock_ti_df = join_dataframes(ti_dfs[0], ti_dfs[1], 'date')
     for ti_df_ind in range(2, len(ti_dfs)):
@@ -117,4 +130,50 @@ def chech_if_should_buy(ti, stock):
     except:
         print('Stock: {} - error'.format(stock))  
         return None, False
+    
+
+def plot_features_target_correlation(df, df_tag, target_column):
+    features_target_corr = df.drop(target_column, axis=1).apply(lambda x: abs(x.corr(df[target_column]))).nlargest(25)
+    features_target_corr.sort_values().plot.bar(figsize=(15, 7), grid=True, fontsize=14,
+                                                title='Target with features correlation in {}'.format(df_tag))
+
+
+def plot_learning_curve(model, loss_func='RMSE'):
+    evals_learn = model.evals_result_['learn'][loss_func]
+    evals_validation = model.evals_result_['validation'][loss_func]
+    iterations = list(range(len(evals_learn)))
+
+    df_evals_learn = pd.DataFrame({'iteration': iterations, 'error': evals_learn, 'eval_type': 'learn'})
+    df_evals_validation = pd.DataFrame({'iteration': iterations, 'error': evals_validation, 'eval_type': 'validation'})
+
+    df_evals = df_evals_learn.append(df_evals_validation, ignore_index=True)
+
+    sns.relplot(data=df_evals, x='iteration', y='error', hue='eval_type', kind='line')
+    
+    
+def calculate_eval_metrics(trained_model, X, y, eval_metrics):
+    pool = Pool(data=X, label=y)
+    tree_count = trained_model.tree_count_
+    return trained_model.eval_metrics(data=pool, 
+                                      metrics=eval_metrics, 
+                                      ntree_start=tree_count - 1, 
+                                      ntree_end=tree_count)
+
+
+def get_sorted_factors(trained_model):
+    feature_importance_df = pd.DataFrame({'feature_importances': trained_model.feature_importances_, 
+                                          'feature_names': trained_model.feature_names_})
+    feature_importance_df.sort_values('feature_importances', ascending=False, inplace=True)
+    return feature_importance_df['feature_names'].values.tolist()
+    
+    
+def plot_feature_importance(trained_model, model_loss, top=20):
+    feature_importance_df = pd.DataFrame()
+    feature_importance_df['feature_importances'] = trained_model.feature_importances_
+    feature_importance_df['feature_names'] = trained_model.feature_names_
+    feature_importance_df = feature_importance_df.nlargest(top, 'feature_importances')
+    feature_importance_df.sort_values(by='feature_importances', axis=0, inplace=True)
+    feature_importance_df.plot.bar(x='feature_names', y='feature_importances', figsize=(15, 7),
+                                   title='Feature importances in {} model'.format(model_loss), 
+                                   grid=True, fontsize=14)
     
