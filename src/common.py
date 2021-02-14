@@ -107,29 +107,57 @@ def get_technical_indicators_df(ti, stock, time_sleep=61):
     return stock_ti_df
 
 
-def chech_if_should_buy(ti, stock):
-    try:
-        # Moving Average Convergence Divergence - 9 days
-        macd_9, macd_sma_9 = ti.get_macd(stock, interval='daily')
-        # RSI - 14 day
-        rsi_14, meta_rsi_14 = ti.get_rsi(stock, interval='daily', time_period=14)
-        # Accumulation/Distribution Line / Chaikin A/D (AD)
-        ad, meta_ad = ti.get_ad(stock, interval='daily')
+def get_technical_indicators_to_predict(ti, stock, time_sleep=61):
+    # Simple Moving Average - 26 days
+    sma_26, meta_sma_26 = ti.get_sma(stock, interval='daily', time_period=26)
+    sma_26.rename(columns={'SMA': 'sma_26'}, inplace=True)
+    # Momentum - 8 day
+    mom_8, meta_mom_8 = ti.get_mom(stock, interval='daily', time_period=8)
+    mom_8.rename(columns={'MOM': 'mom_8'}, inplace=True)
+    # Momentum - 15 day
+    mom_15, meta_mom_15 = ti.get_mom(stock, interval='daily', time_period=15)
+    mom_15.rename(columns={'MOM': 'mom_15'}, inplace=True)
+    # RSI - 14 day
+    rsi_14, meta_rsi_14 = ti.get_rsi(stock, interval='daily', time_period=14)
+    rsi_14.rename(columns={'RSI': 'rsi_14'}, inplace=True)
+    # RSI - 7 day
+    rsi_7, meta_rsi_7 = ti.get_rsi(stock, interval='daily', time_period=7)
+    rsi_7.rename(columns={'RSI': 'rsi_7'}, inplace=True)
+    # Stochastic oscillator - 14 days faskK, 3 days fastD/slowK, 3 days slowD
+    # https://commodity.com/technical-analysis/stochastics/
+    # https://www.fmlabs.com/reference/default.htm?url=StochasticOscillator.htm
+    stoch_14_3_3, meta_stoch_14_3_3 = ti.get_stoch(stock, interval='daily', fastkperiod=14, slowkperiod=3, 
+                                                   slowdperiod=3, slowkmatype=0, slowdmatype=0)
+    # Double Exponential Moving Average - 13 days
+    dema_13, meta_dema_13 = ti.get_dema(stock, interval='daily', time_period=13)
+    dema_13.rename(columns={'DEMA': 'dema_13'}, inplace=True)
+    # Average Directional Movement Index (ADX) - 7 days
+    adx_7, meta_adx_7 = ti.get_adx(stock, interval='daily', time_period=7)
+    adx_7.rename(columns={'ADX': 'adx_7'}, inplace=True)
+    # Average Directional Movement Index (ADX) - 14 days
+    adx_14, meta_adx_14 = ti.get_adx(stock, interval='daily', time_period=14)
+    adx_14.rename(columns={'ADX': 'adx_14'}, inplace=True)
+    # Commodity Channel Index (CCI) - 7 days
+    cci_7, meta_cci_7 = ti.get_cci(stock, interval='daily', time_period=7)
+    cci_7.rename(columns={'CCI': 'cci_7'}, inplace=True)
+    # Commodity Channel Index (CCI) - 14 days
+    cci_14, meta_cci_14 = ti.get_cci(stock, interval='daily', time_period=14)
+    cci_14.rename(columns={'CCI': 'cci_14'}, inplace=True)
+    # Aroon (AROON) values (AroonUp/AroonDown) - 14 days
+    aroon_14, meta_aroon_14 = ti.get_aroon(stock, interval='daily', time_period=14)
+    # Money Flow Index (MFI) - 7 days
+    mfi_7, meta_mfi_7 = ti.get_mfi(stock, interval='daily', time_period=7)
+    mfi_7.rename(columns={'MFI': 'mfi_7'}, inplace=True)
+    
+    ti_dfs = [sma_26, mom_8, mom_15, rsi_7, rsi_14, stoch_14_3_3, dema_13, 
+              adx_7, adx_14, cci_7, cci_14, aroon_14, mfi_7]
+    
+    stock_ti_df = join_dataframes(ti_dfs[0], ti_dfs[1], 'date')
+    for ti_df_ind in range(2, len(ti_dfs)):
+        stock_ti_df = join_dataframes(stock_ti_df, ti_dfs[ti_df_ind], 'date')
 
-        stock_ti_df = join_dataframes(macd_9[-2:], rsi_14[-2:], 'date')
-        stock_ti_df = join_dataframes(stock_ti_df, ad[-2:], 'date')   
-        stock_ti_df.columns = map(lambda c: '_'.join(str.lower(c).split()), stock_ti_df.columns)
-        
-        print('Stock: {}'.format(stock))
-        print(stock_ti_df)
-        macd_is_good = stock_ti_df['macd_hist'][-1] > 0 and stock_ti_df['macd_hist'][-2] < 0
-        rsi_is_good = stock_ti_df['rsi'][-1] > 30 and stock_ti_df['rsi'][-2] < 30
-        ad_is_good = stock_ti_df['chaikin_a/d'][-1] > 0 and stock_ti_df['chaikin_a/d'][-2] < 0
-
-        return stock_ti_df, sum([macd_is_good, rsi_is_good, ad_is_good]) > 0
-    except:
-        print('Stock: {} - error'.format(stock))  
-        return None, False
+    stock_ti_df.columns = map(lambda c: '_'.join(str.lower(c).split()), stock_ti_df.columns)
+    return stock_ti_df
     
 
 def plot_features_target_correlation(df, df_tag, target_column):
@@ -148,16 +176,29 @@ def plot_learning_curve(model, loss_func='RMSE'):
 
     df_evals = df_evals_learn.append(df_evals_validation, ignore_index=True)
 
+    sns.set_style("whitegrid")
     sns.relplot(data=df_evals, x='iteration', y='error', hue='eval_type', kind='line')
     
     
-def calculate_eval_metrics(trained_model, X, y, eval_metrics):
+def calculate_eval_metrics(trained_model, X, y, eval_metrics, last_tree=False):
     pool = Pool(data=X, label=y)
     tree_count = trained_model.tree_count_
     return trained_model.eval_metrics(data=pool, 
                                       metrics=eval_metrics, 
-                                      ntree_start=tree_count - 1, 
+                                      ntree_start=tree_count - 1 if last_tree else 0, 
                                       ntree_end=tree_count)
+
+
+def plot_eval_metrics(trained_model, X, y, eval_metrics):
+    calculated_metrics = calculate_eval_metrics(trained_model, X, y, eval_metrics)
+    df = pd.DataFrame()
+    for m in eval_metrics:
+        values = calculated_metrics[m]
+        df_m = pd.DataFrame({'metric': [m] * len(values), 'value': values, 'iter': list(range(len(values)))})
+        df = df.append(df_m, ignore_index=True)
+    
+    sns.set_style("darkgrid")
+    sns.relplot(data=df, x='iter', y='value', hue='metric', kind='line')    
 
 
 def get_sorted_factors(trained_model):
