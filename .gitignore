@@ -2,3 +2,7 @@
 .ipynb_checkpoints/
 __pycache__/
 *.txt
+*.csv
+*.py
+*/models/*
+*/catboost_info/*
